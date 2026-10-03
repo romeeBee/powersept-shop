@@ -31,7 +31,7 @@ jobs:
         run: bunx tsc -b
 
       - name: Build
-        run: bunx vite build --base=/PowerSept/
+        run: bunx vite build --base=/powersept-shop/
         env:
           # Convex deployment URL (public client key — safe to expose in the bundle)
           VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL || 'https://impartial-panda-38.convex.cloud' }}
