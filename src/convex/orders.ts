@@ -280,9 +280,9 @@ export const claimAdmin = mutation({
     const userId = await getAuthUserId(ctx);
     if (userId === null) throw new Error("Niste prijavljeni.");
     const user = await ctx.db.get(userId);
-    if (user === null || user.isAnonymous === true) {
-      throw new Error("Za skrbnika potrebujete pravi e-poštni račun.");
-    }
+    if (user === null || user.email !== "info@smartads.si") {
+  throw new Error("Za skrbnika potrebujete pravi e-poštni račun.");
+}
     const existing = await ctx.db
       .query("users")
       .filter((q) => q.eq(q.field("role"), "admin"))
