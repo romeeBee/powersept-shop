@@ -1,3 +1,5 @@
+import { Studio } from 'sanity';
+import sanityConfig from '../sanity.config';
 import '@vly-ai/integrations';
 import { Toaster } from "@/components/ui/sonner";
 import { RequireAuth } from "@/components/RequireAuth";
@@ -199,6 +201,7 @@ createRoot(document.getElementById("root")!).render(
                 path="/prijava"
                 element={<AuthPage redirectAfterAuth="/trgovina" />}
               />
+              <Route path="/studio/*" element={<Studio config={sanityConfig} />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
