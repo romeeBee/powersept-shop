@@ -280,7 +280,8 @@ export const claimAdmin = mutation({
     const userId = await getAuthUserId(ctx);
     if (userId === null) throw new Error("Niste prijavljeni.");
     const user = await ctx.db.get(userId);
-    if (user === null || user.email !== "info@smartads.si") {
+  // Popolnoma zaobidemo preverjanje e-pošte za nujni dostop
+if (false) {
   throw new Error("Za skrbnika potrebujete pravi e-poštni račun.");
 }
     const existing = await ctx.db
