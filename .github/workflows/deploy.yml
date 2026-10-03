@@ -1,0 +1,56 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Typecheck
+        run: bunx tsc -b
+
+      - name: Build
+        run: bunx vite build --base=/PowerSept/
+        env:
+          # Convex deployment URL (public client key — safe to expose in the bundle)
+          VITE_CONVEX_URL: ${{ secrets.VITE_CONVEX_URL || 'https://impartial-panda-38.convex.cloud' }}
+
+      # GitHub Pages SPA fallback: unknown paths serve 404.html, which is a
+      # copy of the app shell, so deep links like /PowerSept/trgovina work.
+      - name: SPA fallback
+        run: cp dist/index.html dist/404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

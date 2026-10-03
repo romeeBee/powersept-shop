@@ -1,0 +1,17 @@
+{
+  "name": "Powersept",
+  "short_name": "Powersept",
+  "description": "Profesionalna dezinfekcija in nega — izdelki proti glivicam, plesni in bakterijam.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16697A",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

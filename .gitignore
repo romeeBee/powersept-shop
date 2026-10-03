@@ -1,0 +1,5 @@
+.env.local
+node_modules
+dist
+# _generated is committed on purpose: the GitHub Pages build needs it
+# without re-running Convex codegen (which requires auth).
