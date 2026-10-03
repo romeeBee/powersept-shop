@@ -69,6 +69,8 @@
     "tailwindcss": "^4.1.17",
     "vaul": "^1.1.2",
     "zod": "^4.1.13"
+    "@sanity/client": "^6.24.1",
+"@sanity/image-url": "^1.1.0",
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
