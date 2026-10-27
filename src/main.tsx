@@ -1,46 +1,42 @@
-import { Studio } from 'sanity';
-import sanityConfig from '../sanity.config';
-import '@vly-ai/integrations';
-import { Toaster } from "@/components/ui/sonner";
-import { RequireAuth } from "@/components/RequireAuth";
-import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
-import { ConvexAuthProvider } from "@convex-dev/auth/react";
-import { ConvexReactClient } from "convex/react";
-import React, { StrictMode, useEffect, lazy, Suspense } from "react";
+import "@vly-ai/integrations";
+import React, { StrictMode, Suspense, lazy, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router";
+import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
+import { Toaster } from "@/components/ui/sonner";
+import { ContentProvider } from "@/content/store";
+import { SiteLayout } from "@/components/site/SiteLayout";
 import "./index.css";
 
-// Lazy load route components for better code splitting
-const Landing = lazy(() => import("./pages/Landing.tsx"));
-const AuthPage = lazy(() => import("./pages/Auth.tsx"));
-const ShopLayout = lazy(() => import("./components/shop/ShopLayout.tsx"));
-const Trgovina = lazy(() => import("./pages/Trgovina.tsx"));
-const Izdelek = lazy(() => import("./pages/Izdelek.tsx"));
-const Kosarica = lazy(() => import("./pages/Kosarica.tsx"));
-const Blagajna = lazy(() => import("./pages/Blagajna.tsx"));
-const SeznamZelja = lazy(() => import("./pages/SeznamZelja.tsx"));
-const Narocila = lazy(() => import("./pages/Narocila.tsx"));
-const Admin = lazy(() => import("./pages/Admin.tsx"));
-const Dostava = lazy(() => import("./pages/Dostava.tsx"));
-const Placila = lazy(() => import("./pages/Placila.tsx"));
-const Pogoji = lazy(() => import("./pages/Pogoji.tsx"));
-const Zasebnost = lazy(() => import("./pages/Zasebnost.tsx"));
-const Kontakt = lazy(() => import("./pages/Kontakt.tsx"));
-const ONas = lazy(() => import("./pages/ONas.tsx"));
+const Home = lazy(() => import("./pages/Home.tsx"));
+const ArticlePage = lazy(() => import("./pages/ArticlePage.tsx"));
+const Topic = lazy(() => import("./pages/Topic.tsx"));
+const Writers = lazy(() => import("./pages/Writers.tsx"));
+const Author = lazy(() => import("./pages/Author.tsx"));
+const Archive = lazy(() => import("./pages/Archive.tsx"));
+const Search = lazy(() => import("./pages/Search.tsx"));
+const About = lazy(() => import("./pages/About.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
-// Simple loading fallback for route transitions
+const AdminLayout = lazy(() =>
+  import("./admin/AdminLayout.tsx").then((m) => ({ default: m.AdminLayout })),
+);
+const Dashboard = lazy(() => import("./pages/admin/Dashboard.tsx"));
+const ArticlesAdmin = lazy(() => import("./pages/admin/ArticlesAdmin.tsx"));
+const ArticleEditor = lazy(() => import("./pages/admin/ArticleEditor.tsx"));
+const WritersAdmin = lazy(() => import("./pages/admin/WritersAdmin.tsx"));
+const TopicsAdmin = lazy(() => import("./pages/admin/TopicsAdmin.tsx"));
+const SettingsAdmin = lazy(() => import("./pages/admin/SettingsAdmin.tsx"));
+
 function RouteLoading() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-pulse text-muted-foreground">Nalaganje…</div>
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <span className="kicker animate-pulse text-muted-foreground">Loading</span>
     </div>
   );
 }
 
-/** Silent error boundary — if VlyToolbar crashes it renders nothing instead of
- *  crashing the whole app (e.g. hook errors in the browser runtime). */
+/** Silent error boundary — a toolbar crash must not take the page with it. */
 class ToolbarErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean }
@@ -50,43 +46,32 @@ class ToolbarErrorBoundary extends React.Component<
     return { hasError: true };
   }
   componentDidCatch(err: Error) {
-    console.warn("[VlyToolbar] Caught error, toolbar disabled:", err.message);
+    console.warn("[VlyToolbar] disabled after error:", err.message);
   }
   render() {
     return this.state.hasError ? null : this.props.children;
   }
 }
 
-/** Hard guard so runtime errors never leave the preview as a blank page. */
+/** Hard guard so a runtime error never leaves a blank page. */
 class RootErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { hasError: boolean; message: string; stack: string }
+  { hasError: boolean; message: string }
 > {
-  state = { hasError: false, message: "", stack: "" };
+  state = { hasError: false, message: "" };
   static getDerivedStateFromError(error: Error) {
-    return {
-      hasError: true,
-      message: error.message || "Unknown runtime error",
-      stack: error.stack || "",
-    };
+    return { hasError: true, message: error.message || "Unknown runtime error" };
   }
   componentDidCatch(err: Error) {
-    console.error("[Preview] Root crash:", err);
+    console.error("[SIGNAL] Root crash:", err);
   }
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-background text-foreground p-6">
+        <div className="flex min-h-screen items-center justify-center bg-background p-6 text-foreground">
           <div className="max-w-lg text-center">
-            <p className="text-sm font-semibold">Preview runtime error</p>
-            <p className="mt-2 text-xs text-muted-foreground break-words">
-              {this.state.message}
-            </p>
-            {this.state.stack && (
-              <pre className="mt-3 text-left text-[10px] leading-4 text-muted-foreground/80 max-h-40 overflow-auto rounded border border-border/60 p-2">
-                {this.state.stack}
-              </pre>
-            )}
+            <p className="kicker text-signal">Runtime error</p>
+            <p className="mt-3 text-sm text-muted-foreground">{this.state.message}</p>
           </div>
         </div>
       );
@@ -94,14 +79,6 @@ class RootErrorBoundary extends React.Component<
     return this.props.children;
   }
 }
-
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
-
-// GitHub Pages serves the app from /PowerSept/, so the router must know the
-// base path. In dev it is always "/".
-const ROUTER_BASENAME = (import.meta.env.BASE_URL || "/").replace(/\/+$/, "") || "/";
-
-
 
 function RouteSyncer() {
   const location = useLocation();
@@ -126,88 +103,43 @@ function RouteSyncer() {
   return null;
 }
 
-
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <RootErrorBoundary>
       <ToolbarErrorBoundary>
         <VlyToolbar />
       </ToolbarErrorBoundary>
-      <ConvexAuthProvider client={convex}>
-        <BrowserRouter basename={ROUTER_BASENAME}>
+      <ContentProvider>
+        <BrowserRouter>
           <RouteSyncer />
           <Suspense fallback={<RouteLoading />}>
             <Routes>
-              {/* Shop shell wraps every storefront route */}
-              <Route element={<ShopLayout />}>
-                <Route path="/" element={<Landing />} />
-                <Route path="/trgovina" element={<Trgovina />} />
-                <Route path="/izdelek/:slug" element={<Izdelek />} />
-                <Route path="/kosarica" element={<Kosarica />} />
-                <Route
-                  path="/blagajna"
-                  element={
-                    <RequireAuth
-                      title="Zaključite nakup"
-                      description="Za oddajo naročila se prijavite s svojim e-poštnim naslovom."
-                    >
-                      <Blagajna />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/seznam-zelja"
-                  element={
-                    <RequireAuth
-                      title="Seznam želja"
-                      description="Seznam želja je oseben — prijavite se za njegov ogled."
-                    >
-                      <SeznamZelja />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/narocila"
-                  element={
-                    <RequireAuth
-                      title="Moja naročila"
-                      description="Pregled naročil je na voljo prijavljenim uporabnikom."
-                    >
-                      <Narocila />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/admin"
-                  element={
-                    <RequireAuth
-                      title="Nadzorna plošča"
-                      description="Za dostop do upravljanja naročil se prijavite."
-                    >
-                      <Admin />
-                    </RequireAuth>
-                  }
-                />
-                {/* Info pages */}
-                <Route path="/dostava" element={<Dostava />} />
-                <Route path="/placila" element={<Placila />} />
-                <Route path="/pogoji" element={<Pogoji />} />
-                <Route path="/zasebnost" element={<Zasebnost />} />
-                <Route path="/kontakt" element={<Kontakt />} />
-                <Route path="/o-nas" element={<ONas />} />
+              <Route element={<SiteLayout />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/article/:slug" element={<ArticlePage />} />
+                <Route path="/topic/:slug" element={<Topic />} />
+                <Route path="/writers" element={<Writers />} />
+                <Route path="/author/:slug" element={<Author />} />
+                <Route path="/archive" element={<Archive />} />
+                <Route path="/search" element={<Search />} />
+                <Route path="/about" element={<About />} />
+                <Route path="*" element={<NotFound />} />
               </Route>
 
-              <Route
-                path="/prijava"
-                element={<AuthPage redirectAfterAuth="/trgovina" />}
-              />
-              <Route path="/studio/*" element={<Studio config={sanityConfig} />} />
-              <Route path="*" element={<NotFound />} />
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="articles" element={<ArticlesAdmin />} />
+                <Route path="articles/new" element={<ArticleEditor />} />
+                <Route path="articles/:slug" element={<ArticleEditor />} />
+                <Route path="writers" element={<WritersAdmin />} />
+                <Route path="topics" element={<TopicsAdmin />} />
+                <Route path="settings" element={<SettingsAdmin />} />
+              </Route>
             </Routes>
           </Suspense>
         </BrowserRouter>
-        <Toaster />
-      </ConvexAuthProvider>
+        <Toaster position="bottom-right" />
+      </ContentProvider>
     </RootErrorBoundary>
   </StrictMode>,
 );
