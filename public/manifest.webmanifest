@@ -1,11 +1,11 @@
 {
-  "name": "Powersept",
-  "short_name": "Powersept",
-  "description": "Profesionalna dezinfekcija in nega — izdelki proti glivicam, plesni in bakterijam.",
+  "name": "SIGNAL",
+  "short_name": "SIGNAL",
+  "description": "A technology magazine covering silicon, software, energy, security and the people building them.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#16697A",
+  "background_color": "#faf7f2",
+  "theme_color": "#13100e",
   "icons": [
     {
       "src": "/favicon.svg",

@@ -1,21 +1,32 @@
 <!doctype html>
-<html lang="sl">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0d0b0a" />
+  <title>SIGNAL — Technology, reported closely</title>
   <meta name="description"
-    content="Powersept — sredstvo proti glivicam na nohtih z aplikatorjem, razkužilo za površine brez vonja, razkužilo za igrače in odstranjevanje plesni na steni. Brez vonja, brez izpiranja, 100 % biorazgradljivo." />
-  <title>Powersept | Sredstvo proti glivicam, razkužilo za površine in proti plesni</title>
+    content="SIGNAL is a technology magazine covering silicon, software, energy, security and the people building them." />
+  <link rel="alternate" type="application/rss+xml" title="SIGNAL" href="/rss.xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap"
     rel="stylesheet" />
+  <script>
+    // Apply the saved colour scheme before first paint to avoid a flash.
+    (function () {
+      try {
+        var saved = localStorage.getItem("signal.theme");
+        var dark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (dark) document.documentElement.classList.add("dark");
+      } catch (e) { }
+    })();
+  </script>
 </head>
-
 
 <body>
   <div id="root"></div>
